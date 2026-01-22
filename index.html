@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Mock Test</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        :root { --main-color: #248bcf; --bg-color: #f4f4f9; }
+        body { font-family: sans-serif; background: var(--bg-color); margin: 0; padding: 15px; }
+        .container { max-width: 500px; margin: 0 auto; background: white; padding: 15px; border-radius: 12px; shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        .question-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 20px; }
+        .q-row { display: flex; align-items: center; justify-content: space-between; padding: 5px; border-bottom: 1px solid #eee; }
+        .opt-btn { padding: 5px 8px; margin: 0 2px; border: 1px solid #ccc; border-radius: 4px; background: #fff; cursor: pointer; }
+        .opt-btn.active { background: var(--main-color); color: white; border-color: var(--main-color); }
+        .math-input { width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
+        .keyboard { display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px; background: #ddd; padding: 10px; position: fixed; bottom: 0; left: 0; width: 100%; display: none; }
+        .key { background: white; padding: 10px; text-align: center; border-radius: 5px; font-weight: bold; cursor: pointer; }
+        .submit-btn { width: 100%; padding: 15px; background: #28a745; color: white; border: none; border-radius: 8px; font-size: 16px; margin-top: 20px; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h3>Mock Test Kalitlari</h3>
+    
+    <div id="test-form">
+        </div>
+
+    <button class="submit-btn" onclick="sendToBot()">Javoblarni yuborish</button>
+</div>
+
+<div id="math-kbd" class="keyboard">
+    <div class="key" onclick="addChar('√')">√</div>
+    <div class="key" onclick="addChar('²')">x²</div>
+    <div class="key" onclick="addChar('π')">π</div>
+    <div class="key" onclick="backspace()">⌫</div>
+    <div class="key" onclick="addChar('1')">1</div>
+    <div class="key" onclick="addChar('2')">2</div>
+    <div class="key" onclick="addChar('3')">3</div>
+    <div class="key" onclick="closeKbd()">OK</div>
+</div>
+
+<script>
+    let tg = window.Telegram.WebApp;
+    tg.expand();
+    let currentInput = null;
+
+    const form = document.getElementById('test-form');
+
+    // 1-33 savollar (ABCD)
+    for(let i=1; i<=33; i++) {
+        createMCQ(i, ['A', 'B', 'C', 'D']);
+    }
+
+    // 34-36 savollar (ABCDEF)
+    for(let i=34; i<=36; i++) {
+        createMCQ(i, ['A', 'B', 'C', 'D', 'E', 'F']);
+    }
+
+    // 37-55 savollar (Yozma)
+    for(let i=37; i<=55; i++) {
+        createWriteIn(i);
+    }
+
+    function createMCQ(num, options) {
+        let div = document.createElement('div');
+        div.className = 'q-row';
+        div.innerHTML = `<span>${num}.</span> <div id="q${num}"></div>`;
+        form.appendChild(div);
+        options.forEach(opt => {
+            let btn = document.createElement('button');
+            btn.className = 'opt-btn';
+            btn.innerText = opt;
+            btn.onclick = () => {
+                Array.from(btn.parentNode.children).forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+            };
+            document.getElementById(`q${num}`).appendChild(btn);
+        });
+    }
+
+    function createWriteIn(num) {
+        let div = document.createElement('div');
+        div.className = 'q-row';
+        div.innerHTML = `<span>${num}.</span> <input type="text" class="math-input" id="q${num}" onfocus="showKbd(this)" placeholder="Javob...">`;
+        form.appendChild(div);
+    }
+
+    // Klaviatura funksiyalari
+    function showKbd(input) {
+        currentInput = input;
+        document.getElementById('math-kbd').style.display = 'grid';
+    }
+    function closeKbd() { document.getElementById('math-kbd').style.display = 'none'; }
+    function addChar(char) { if(currentInput) currentInput.value += char; }
+    function backspace() { if(currentInput) currentInput.value = currentInput.value.slice(0, -1); }
+
+    function sendToBot() {
+        let results = {};
+        for(let i=1; i<=55; i++) {
+            if(i <= 36) {
+                let active = document.querySelector(`#q${i} .active`);
+                results[i] = active ? active.innerText : "";
+            } else {
+                results[i] = document.getElementById(`q${i}`).value;
+            }
+        }
+        tg.sendData(JSON.stringify(results)); // Botga JSON formatda yuboradi
+    }
+</script>
+</body>
+</html>
